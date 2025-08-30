@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple To‑Do List</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container" role="main">
+    <h1>My To‑Do List</h1>
+    <p class="lead">Add tasks below. Click the checkbox to mark done and the delete button to remove a task instantly.</p>
+
+    <div class="input-row">
+      <input id="taskInput" type="text" placeholder="Add a new task and press Enter or click Add" aria-label="New task" />
+      <button id="addBtn" aria-label="Add task">Add</button>
+    </div>
+
+    <ul id="tasks" aria-live="polite"></ul>
+
+  </main>
+
+  <script>
+    const input = document.getElementById('taskInput');
+    const addBtn = document.getElementById('addBtn');
+    const tasksList = document.getElementById('tasks');
+
+    let tasks = JSON.parse(localStorage.getItem('simple_todo_tasks') || '[]');
+
+    function save() {
+      localStorage.setItem('simple_todo_tasks', JSON.stringify(tasks));
+    }
+
+    function render() {
+      tasksList.innerHTML = '';
+      if (tasks.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'No tasks yet. Add something you need to remember!';
+        tasksList.appendChild(empty);
+        return;
+      }
+
+      tasks.forEach((t, idx) => {
+        const li = document.createElement('li');
+        li.className = 'task';
+
+        const left = document.createElement('div');
+        left.className = 'left';
+
+        const cb = document.createElement('button');
+        cb.className = 'checkbox' + (t.done ? ' checked' : '');
+        cb.setAttribute('aria-label', t.done ? 'Mark as not done' : 'Mark as done');
+        cb.innerHTML = t.done ? '\u2713' : '';
+        cb.addEventListener('click', () => {
+          tasks[idx].done = !tasks[idx].done;
+          save();
+          render();
+        });
+
+        const text = document.createElement('div');
+        text.className = 'task-text' + (t.done ? ' done' : '');
+        text.textContent = t.text;
+
+        left.appendChild(cb);
+        left.appendChild(text);
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.textContent = 'Delete';
+        del.addEventListener('click', () => {
+          tasks.splice(idx, 1);
+          save();
+          render();
+        });
+
+        actions.appendChild(del);
+
+        li.appendChild(left);
+        li.appendChild(actions);
+
+        tasksList.appendChild(li);
+      });
+    }
+
+    function addTask(text) {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      tasks.push({text: trimmed, done: false});
+      save();
+      render();
+      input.value = '';
+      input.focus();
+    }
+
+    addBtn.addEventListener('click', () => addTask(input.value));
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addTask(input.value);
+    });
+
+    render();
+  </script>
+</body>
+</html>
